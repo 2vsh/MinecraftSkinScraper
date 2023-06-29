@@ -61,8 +61,8 @@ with open("scraped_usernames.txt", "r") as file:
     scraped_usernames = [line.strip() for line in file]
 
 for username in all_combinations:
-    if username in scraped_usernames:  # Skip usernames already viewed
-        print(f"Username: {username} already viewed. Skipping.")
+    if username in scraped_usernames:  # Skip usernames already scraped.
+        print(f"Username: {username} already scraped. Skipping.")
         continue
     proxies = random.choice(proxies_list) if USE_PROXIES else None
     uuid = get_uuid(username, proxies)
@@ -73,7 +73,7 @@ for username in all_combinations:
         print(f"Username: {username}, Skin downloaded")
     time.sleep(delay)
 
-# If all combinations have been viewed, print a message and exit
+# If all combinations have been scraped, print a message and exit
 if set(scraped_usernames) == set(all_combinations):
     if ONLY_ALPHABETS:
         print("All alphabet usernames have been scraped.")
