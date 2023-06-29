@@ -8,19 +8,11 @@ import socks
 import socket
 from requests.auth import HTTPDigestAuth
 
-# The Mojang API URL to get UUID for a username
 UUID_URL = "https://api.mojang.com/users/profiles/minecraft/{username}"
-
-# The Mojang API URL to get the skin for a UUID
 SKIN_URL = "https://crafatar.com/skins/{uuid}"
-
-# Set whether to use proxies
 USE_PROXIES = True
-
-# Set whether to use only alphabets for usernames (A-Z)
 ONLY_ALPHABETS = True
 
-# Get the UUID for a username
 def get_uuid(username, proxies=None):
     response = requests.get(UUID_URL.format(username=username), proxies=proxies)
     if response.status_code == 200:
@@ -28,7 +20,6 @@ def get_uuid(username, proxies=None):
     else:
         return None
 
-# Download and save the skin to a file
 def download_skin(uuid, path, proxies=None):
     url = SKIN_URL.format(uuid=uuid)
     response = requests.get(url, stream=True, proxies=proxies)
@@ -37,15 +28,12 @@ def download_skin(uuid, path, proxies=None):
             for chunk in response:
                 file.write(chunk)
 
-# Set the delay for downloading skins (in seconds)
 delay = 1
 
-# Check if proxy.txt exists, if not, create a default one
 if not os.path.exists("proxy.txt"):
     with open("proxy.txt", "w") as file:
         file.write("127.0.0.1:8080:username:password\n")
 
-# Load proxies from file
 proxies_list = []
 if USE_PROXIES:
     with open("proxy.txt", "r") as file:
@@ -57,23 +45,38 @@ if USE_PROXIES:
             }
             proxies_list.append(proxies)
 
-# Generate all possible 3-letter combinations based on ONLY_ALPHABETS
 if ONLY_ALPHABETS:
     all_combinations = [''.join(i) for i in itertools.product(string.ascii_lowercase, repeat=3)]
 else:
     all_combinations = [''.join(i) for i in itertools.product(string.ascii_lowercase + string.digits + '_', repeat=3)]
 
-# Shuffle the combinations to get them in random order
 random.shuffle(all_combinations)
-
-# Make sure the skins directory exists
 os.makedirs("skins", exist_ok=True)
 
-# Iterate over all 3-letter combinations
+# Create or load 'scraped_usernames.txt'
+if not os.path.exists("scraped_usernames.txt"):
+    with open("scraped_usernames.txt", "w") as file:
+        pass
+with open("scraped_usernames.txt", "r") as file:
+    scraped_usernames = [line.strip() for line in file]
+
 for username in all_combinations:
-    proxies = random.choice(proxies_list) if USE_PROXIES else None  # Select a random proxy if USE_PROXIES is True
+    if username in scraped_usernames:  # Skip usernames already viewed
+        print(f"Username: {username} already viewed. Skipping.")
+        continue
+    proxies = random.choice(proxies_list) if USE_PROXIES else None
     uuid = get_uuid(username, proxies)
     if uuid is not None:
         download_skin(uuid, f"skins/{username}.png", proxies)
+        with open("scraped_usernames.txt", "a") as file:  # Append scraped username to 'scraped_usernames.txt'
+            file.write(f"{username}\n")
         print(f"Username: {username}, Skin downloaded")
-    time.sleep(delay)  # Delay between lookups
+    time.sleep(delay)
+
+# If all combinations have been viewed, print a message and exit
+if set(scraped_usernames) == set(all_combinations):
+    if ONLY_ALPHABETS:
+        print("All alphabet usernames have been scraped.")
+    else:
+        print("All alphanumeric and underscore usernames have been scraped.")
+    exit()
