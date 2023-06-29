@@ -37,7 +37,7 @@ def download_skin(uuid, path, proxies=None):
             for chunk in response:
                 file.write(chunk)
 
-# Set your delay in seconds
+# Set the delay for downloading skins (in seconds)
 delay = 1
 
 # Check if proxy.txt exists, if not, create a default one
